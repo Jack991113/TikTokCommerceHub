@@ -1,78 +1,142 @@
-# TikTok Commerce Hub
+# Architecture
 
-## 为什么旧项目看起来像 70 万行
+## Goal
 
-真实业务源码没有这么大。当前拆出来的主源码大约是：
+The old working suite grew by copying store apps, packaging outputs, and runtime data into the same tree.
 
-- `TikTokOrderPrinter`: 约 8500 行
-- `TikTokOrderPrinter-Store2`: 约 8000 行
-- `TikTokSalesStats`: 约 9600 行
+This repository separates:
 
-真正把体量放大的是：
+- maintainable source code
+- shared business logic
+- runtime data
+- packaging scripts
 
-- 双店复制
-- 打包目录
-- `bin / obj / publish`
-- 阶段目录和历史发布包
+without breaking the currently running local apps.
 
-也就是说，核心问题不是“业务代码 70 万行”，而是：
+## Top-level structure
 
-1. 运行形态和源码混在一起
-2. 单体里既做轮询、又做聚合、又做前端大 JSON 返回
-3. 同一个页面同时打多个重接口
-4. 全量返回、全量渲染
+```text
+TikTokCommerceHub/
+  apps/
+    Store1/
+    Store2/
+    StoreShared/
+    Dashboard/
+  src/
+    TikTokCommerceHub.Domain/
+    TikTokCommerceHub.Application/
+    TikTokCommerceHub.Infrastructure/
+    TikTokCommerceHub.Web/
+  docs/
+  tools/
+```
 
-## 新架构目标
+## App layout
 
-这套新项目只解决一件事：
+### Store1 and Store2
 
-- 先把**高并发、只读、看板类查询**从旧系统里抽出来
+These are the local printing apps.
 
-原则：
+Responsibilities:
 
-- 旧程序继续跑
-- 新架构单独演进
-- 后续逐步迁移
+- poll TikTok order APIs
+- capture buyer handle via Seller Center bridge
+- render and print tickets
+- expose local management UI
 
-## 分层
+Most of the code is shared through:
 
-- `TikTokCommerceHub.Domain`
-  - 纯领域模型
-- `TikTokCommerceHub.Application`
-  - 查询用例和 DTO
-- `TikTokCommerceHub.Infrastructure`
-  - 读取当前运行程序的状态文件
-- `TikTokCommerceHub.Web`
-  - 轻量 API 和看板入口
+- `apps/StoreShared`
 
-## 性能原则
+Only store-specific launch/config files remain in each store app.
 
-- 不在首页同时触发多个重查询
-- 不把全量订单明细一次性塞给前端
-- 先聚合，后分页
-- 读模型服务端缓存
-- 输出缓存
-- 响应压缩
-- 速率限制
+### Dashboard
 
-## 迁移顺序
+This is the analytics app.
 
-1. 先迁移只读总览
-2. 再迁移对账和主播薪资
-3. 再迁移产品维度统计
-4. 最后才迁移打印相关后台能力
+Responsibilities:
 
-## 当前已完成
+- sales overview
+- reconciliation
+- product performance
+- streamer compensation
+- export and workbook generation
 
-- 新解决方案骨架
-- 读模型快照接口
-- 服务端缓存和输出缓存基础
-- 健康检查、静态首页、速率限制
+### New layered foundation
 
-## 下一步
+The `src/` tree is the forward-looking architecture:
 
-- 引入分页式订单明细接口
-- 引入按月汇总读模型
-- 引入产品业绩读模型
-- 引入主播薪资聚合读模型
-- 最终替换旧的重型看板首页
+- `Domain`
+  - business entities and shared rules
+- `Application`
+  - use cases and DTOs
+- `Infrastructure`
+  - file/runtime readers and external integration support
+- `Web`
+  - lightweight web endpoints
+
+This allows gradual migration from the older app-heavy structure into a cleaner shared backend.
+
+## Runtime data
+
+Runtime data is intentionally outside Git-safe source control flow:
+
+- `apps/Store1/Data/runtime-state.json`
+- `apps/Store2/Data/runtime-state.json`
+- `apps/Store1/Data/print-jobs/`
+- `apps/Store2/Data/print-jobs/`
+
+These files may contain:
+
+- tokens
+- printer settings
+- cached order data
+- print history
+
+They must not be pushed to GitHub.
+
+## Packaging strategy
+
+Packaging is script-driven:
+
+- `tools/package-commerce-suite.ps1`
+
+Modes:
+
+- `ClientClean`
+  - safe to send to customers
+  - excludes runtime secrets and order data
+- `ConfiguredOwner`
+  - includes current configuration for owner use
+
+## GitHub export strategy
+
+GitHub-safe export is created by:
+
+- `tools/export-github-clean.ps1`
+
+The export rewrites paths where needed and excludes runtime-sensitive files.
+
+## Why this is slimmer than the old tree
+
+The old size looked much larger mainly because of:
+
+- duplicated Store1 and Store2 source
+- `bin/obj/publish`
+- packaged artifacts
+- validation and staging directories
+- runtime data mixed into source trees
+
+After extracting shared code, the maintainable source is much smaller and easier to reason about.
+
+## Next refactor direction
+
+Recommended next steps:
+
+1. Keep Store1 and Store2 running as-is.
+2. Continue moving duplicated frontend pieces into shared assets.
+3. Move more dashboard query logic into `src/Application`.
+4. Reduce app-specific startup code even further.
+5. Eventually make a cleaner deployable split:
+   - server-side business backend
+   - local print agent
