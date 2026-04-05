@@ -1,0 +1,71 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6AA773CF-73FA-4ECF-88E5-690D8EDC782F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TikTokCommerceHub.Domain", "src\TikTokCommerceHub.Domain\TikTokCommerceHub.Domain.csproj", "{63575607-6599-411C-AF33-52A4FE4ED766}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TikTokCommerceHub.Application", "src\TikTokCommerceHub.Application\TikTokCommerceHub.Application.csproj", "{A258DB64-0045-4612-A808-21BD9554EB8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TikTokCommerceHub.Infrastructure", "src\TikTokCommerceHub.Infrastructure\TikTokCommerceHub.Infrastructure.csproj", "{4A7C2437-9D03-40C4-B0FB-F63AE2DF0C74}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TikTokCommerceHub.Web", "src\TikTokCommerceHub.Web\TikTokCommerceHub.Web.csproj", "{D932B06B-264B-43C7-BCE1-55DBA755E2ED}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "apps", "apps", "{138FAE66-63A5-4F32-BD36-132BFCE471D8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TikTokOrderPrinter.Store1", "apps\Store1\TikTokOrderPrinter.Store1.csproj", "{49BC8838-63DD-4C58-9E18-23F9F47E595B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TikTokOrderPrinter.Store2", "apps\Store2\TikTokOrderPrinter.Store2.csproj", "{F4A3AFA4-0C69-4502-A282-5C77D007E6A6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TikTokSalesStats", "apps\Dashboard\TikTokSalesStats.csproj", "{C6A70547-B20C-491A-93C8-11B9D25E284D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{63575607-6599-411C-AF33-52A4FE4ED766}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63575607-6599-411C-AF33-52A4FE4ED766}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63575607-6599-411C-AF33-52A4FE4ED766}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63575607-6599-411C-AF33-52A4FE4ED766}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A258DB64-0045-4612-A808-21BD9554EB8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A258DB64-0045-4612-A808-21BD9554EB8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A258DB64-0045-4612-A808-21BD9554EB8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A258DB64-0045-4612-A808-21BD9554EB8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A7C2437-9D03-40C4-B0FB-F63AE2DF0C74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A7C2437-9D03-40C4-B0FB-F63AE2DF0C74}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A7C2437-9D03-40C4-B0FB-F63AE2DF0C74}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A7C2437-9D03-40C4-B0FB-F63AE2DF0C74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D932B06B-264B-43C7-BCE1-55DBA755E2ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D932B06B-264B-43C7-BCE1-55DBA755E2ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D932B06B-264B-43C7-BCE1-55DBA755E2ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D932B06B-264B-43C7-BCE1-55DBA755E2ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49BC8838-63DD-4C58-9E18-23F9F47E595B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49BC8838-63DD-4C58-9E18-23F9F47E595B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49BC8838-63DD-4C58-9E18-23F9F47E595B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49BC8838-63DD-4C58-9E18-23F9F47E595B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4A3AFA4-0C69-4502-A282-5C77D007E6A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4A3AFA4-0C69-4502-A282-5C77D007E6A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4A3AFA4-0C69-4502-A282-5C77D007E6A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4A3AFA4-0C69-4502-A282-5C77D007E6A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6A70547-B20C-491A-93C8-11B9D25E284D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6A70547-B20C-491A-93C8-11B9D25E284D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6A70547-B20C-491A-93C8-11B9D25E284D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6A70547-B20C-491A-93C8-11B9D25E284D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{63575607-6599-411C-AF33-52A4FE4ED766} = {6AA773CF-73FA-4ECF-88E5-690D8EDC782F}
+		{A258DB64-0045-4612-A808-21BD9554EB8C} = {6AA773CF-73FA-4ECF-88E5-690D8EDC782F}
+		{4A7C2437-9D03-40C4-B0FB-F63AE2DF0C74} = {6AA773CF-73FA-4ECF-88E5-690D8EDC782F}
+		{D932B06B-264B-43C7-BCE1-55DBA755E2ED} = {6AA773CF-73FA-4ECF-88E5-690D8EDC782F}
+		{49BC8838-63DD-4C58-9E18-23F9F47E595B} = {138FAE66-63A5-4F32-BD36-132BFCE471D8}
+		{F4A3AFA4-0C69-4502-A282-5C77D007E6A6} = {138FAE66-63A5-4F32-BD36-132BFCE471D8}
+		{C6A70547-B20C-491A-93C8-11B9D25E284D} = {138FAE66-63A5-4F32-BD36-132BFCE471D8}
+	EndGlobalSection
+EndGlobal

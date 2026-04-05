@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="bin-verify\**\*.cs" />
+    <Compile Remove="obj-verify\**\*.cs" />
+    <Content Remove="bin-verify\**\*" />
+    <Content Remove="obj-verify\**\*" />
+    <None Remove="bin-verify\**\*" />
+    <None Remove="obj-verify\**\*" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TikTok Commerce Hub</title>
+  <style>
+    body { font-family: Segoe UI, sans-serif; margin: 0; padding: 32px; background: #0f172a; color: #e2e8f0; }
+    .wrap { max-width: 1120px; margin: 0 auto; }
+    .hero { margin-bottom: 24px; }
+    .hero h1 { margin: 0 0 8px; font-size: 32px; }
+    .hero p { margin: 0; color: #94a3b8; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 24px; }
+    .card { background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 18px; }
+    .card span { display: block; color: #94a3b8; font-size: 13px; margin-bottom: 8px; }
+    .card strong { font-size: 28px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 24px; background: #111827; border-radius: 16px; overflow: hidden; }
+    th, td { text-align: left; padding: 14px 16px; border-bottom: 1px solid #1f2937; }
+    th { color: #94a3b8; font-weight: 600; font-size: 13px; }
+    .note { margin-top: 18px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>TikTok Commerce Hub</h1>
+      <p>新架构骨架。只读快照、服务端缓存、输出缓存、轻量 API。后续逐步把老系统能力迁移进来。</p>
+    </div>
+    <div id="summary" class="grid"></div>
+    <table>
+      <thead>
+        <tr>
+          <th>店铺</th>
+          <th>总订单</th>
+          <th>已支付</th>
+          <th>未支付</th>
+          <th>已取消</th>
+          <th>已交付</th>
+          <th>已打印</th>
+          <th>用户名覆盖</th>
+          <th>最近订单</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p id="note" class="note"></p>
+  </div>
+  <script>
+    async function main() {
+      const response = await fetch('/api/dashboard/snapshot');
+      const data = await response.json();
+      document.getElementById('summary').innerHTML = [
+        ['总订单', data.totals.totalOrders],
+        ['已支付', data.totals.paidOrders],
+        ['未支付', data.totals.unpaidOrders],
+        ['已取消', data.totals.cancelledOrders],
+        ['已交付', data.totals.deliveredOrders],
+        ['已打印', data.totals.printedOrders]
+      ].map(([label, value]) => `<div class="card"><span>${label}</span><strong>${value}</strong></div>`).join('');
+
+      document.getElementById('rows').innerHTML = data.stores.map((store) => `
+        <tr>
+          <td>${store.storeName}</td>
+          <td>${store.totalOrders}</td>
+          <td>${store.paidOrders}</td>
+          <td>${store.unpaidOrders}</td>
+          <td>${store.cancelledOrders}</td>
+          <td>${store.deliveredOrders}</td>
+          <td>${store.printedOrders}</td>
+          <td>${store.handleCoveredOrders}</td>
+          <td>${store.lastOrderAtUtc ?? '-'}</td>
+        </tr>`).join('');
+
+      document.getElementById('note').textContent = data.architectureNote;
+    }
+
+    main();
+  </script>
+</body>
+</html>

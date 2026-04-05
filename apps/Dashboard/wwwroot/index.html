@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TikTok 电商数据看板</title>
+    <link rel="stylesheet" href="/styles.css?v=20260331a" />
+</head>
+<body>
+    <div class="app-shell">
+        <header class="hero">
+            <div class="hero-copy">
+                <p class="eyebrow">TikTok Commerce Intelligence</p>
+                <h1>专业电商数据看板</h1>
+                <p class="hero-text">
+                    独立统计模块，直接读取 TikTok API 销售数据，不影响当前运行中的打印程序。
+                    统计默认按实际支付时间计算，自动排除未支付、已取消、已退款、已关闭订单。
+                </p>
+            </div>
+            <div class="hero-status">
+                <span class="status-chip" id="statusChip">准备中</span>
+                <span class="status-chip subtle" id="timezoneChip">时区 -</span>
+                <span class="status-chip subtle" id="generatedAtChip">最近更新 -</span>
+            </div>
+        </header>
+
+        <section class="panel control-panel">
+            <div class="panel-head">
+                <div>
+                    <h2>查询与导出</h2>
+                    <p>支持店铺、月份、自定义日期、对账口径开关、CSV/XLSX 导出，以及一键复制订单号和金额。</p>
+                </div>
+                <div class="panel-actions">
+                    <button type="button" class="secondary-button" id="openProductPerformanceButton">产品业绩窗口</button>
+                    <button type="button" class="secondary-button" id="openStreamerCompensationButton">主播薪资窗口</button>
+                    <button type="button" class="secondary-button" id="copySummaryButton">复制汇总</button>
+                    <button type="button" class="secondary-button" id="copyOrderIdsButton">复制全部订单号</button>
+                    <button type="button" class="secondary-button" id="copyOrderAmountButton">复制订单号+金额</button>
+                    <button type="button" class="secondary-button" id="exportCsvButton">导出 CSV</button>
+                    <button type="button" class="primary-button" id="exportXlsxButton">导出 XLSX</button>
+                </div>
+            </div>
+
+            <form id="filtersForm" class="filters-grid">
+                <label class="field">
+                    <span>店铺</span>
+                    <select id="storeSelect"></select>
+                </label>
+                <label class="field">
+                    <span>月份</span>
+                    <select id="monthSelect"></select>
+                </label>
+                <label class="field">
+                    <span>开始日期</span>
+                    <input id="fromDateInput" type="date" />
+                </label>
+                <label class="field">
+                    <span>结束日期</span>
+                    <input id="toDateInput" type="date" />
+                </label>
+                <div class="field action-field">
+                    <span>刷新</span>
+                    <button type="submit" class="primary-button">刷新数据</button>
+                </div>
+            </form>
+
+            <div class="toolbar-row">
+                <div class="preset-strip">
+                    <button type="button" class="preset-button" data-preset="today">当日</button>
+                    <button type="button" class="preset-button" data-preset="month">本月</button>
+                    <button type="button" class="preset-button" data-preset="7days">近 7 天</button>
+                    <button type="button" class="preset-button" data-preset="30days">近 30 天</button>
+                </div>
+                <div class="view-switch">
+                    <button type="button" class="view-button active" data-view="overview">总览</button>
+                    <button type="button" class="view-button" data-view="rhythm">节奏</button>
+                    <button type="button" class="view-button" data-view="commerce">经营</button>
+                    <button type="button" class="view-button" data-view="buyers">客户</button>
+                    <button type="button" class="view-button" data-view="products">商品</button>
+                    <button type="button" class="view-button" data-view="reconciliation">对账</button>
+                    <button type="button" class="view-button" data-view="risk">风险</button>
+                </div>
+            </div>
+
+            <div class="settings-grid">
+                <label class="toggle-card">
+                    <input id="includeTikTokDiscountToggle" type="checkbox" checked />
+                    <span>计入 TikTok 折扣</span>
+                    <small>把平台承担的 TikTok 折扣一起计入成交额和对账估算。</small>
+                </label>
+                <label class="toggle-card">
+                    <input id="includeBuyerShippingFeeToggle" type="checkbox" />
+                    <span>计入买家运费</span>
+                    <small>把买家支付的运费一并计入总收入和对账估算。</small>
+                </label>
+                <label class="toggle-card">
+                    <input id="deductPlatformFeeToggle" type="checkbox" checked />
+                    <span>扣除平台费</span>
+                    <small>按平台费率估算并扣除平台费用。</small>
+                </label>
+                <label class="toggle-card">
+                    <input id="deductLogisticsCostToggle" type="checkbox" checked />
+                    <span>扣除物流成本</span>
+                    <small>按单票物流成本估算并扣除物流费用。</small>
+                </label>
+                <label class="field compact">
+                    <span>平台费率 (%)</span>
+                    <input id="platformFeeRateInput" type="number" min="0" step="0.1" value="0" />
+                </label>
+                <label class="field compact">
+                    <span>单票物流成本</span>
+                    <input id="logisticsCostInput" type="number" min="0" step="1" value="600" />
+                </label>
+            </div>
+        </section>
+
+        <section class="overview-grid" id="overviewCards"></section>
+
+        <main class="view-stack">
+            <section class="view-panel active" data-view-panel="overview">
+                <section class="panel module">
+                    <div class="panel-head">
+                        <div>
+                            <h2>经营洞察</h2>
+                            <p>提炼当前区间最关键的店铺、时间段、支付方式、客户和热销商品。</p>
+                        </div>
+                    </div>
+                    <div class="insight-grid" id="insightCards"></div>
+                </section>
+
+                <section class="dashboard-grid">
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>支付趋势</h2>
+                                <p>看实付、TikTok 折扣和成交额的按日变化。</p>
+                            </div>
+                        </div>
+                        <div class="chart-shell">
+                            <div class="chart-meta" id="dailyChartMeta"></div>
+                            <div id="dailyTrendChart" class="chart-area"></div>
+                        </div>
+                    </article>
+
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>月度柱状图</h2>
+                                <p>适合快速看月报、月度高峰和淡旺季走势。</p>
+                            </div>
+                        </div>
+                        <div class="chart-shell">
+                            <div class="chart-meta" id="monthlyChartMeta"></div>
+                            <div id="monthlyBarChart" class="chart-area"></div>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="dashboard-grid">
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>付款星期分布</h2>
+                                <p>看周内哪几天更容易成交。</p>
+                            </div>
+                        </div>
+                        <div class="bar-list" id="weekdayBreakdown"></div>
+                    </article>
+
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>小时热力图</h2>
+                                <p>看付款集中在什么时间段，方便安排直播和客服节奏。</p>
+                            </div>
+                        </div>
+                        <div class="heatmap-grid" id="hourlyHeatmap"></div>
+                    </article>
+                </section>
+            </section>
+
+            <section class="view-panel" data-view-panel="rhythm">
+                <section class="dashboard-grid">
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>按日明细</h2>
+                                <p>按实际支付日期统计的订单数、实付、折扣和成交额。</p>
+                            </div>
+                        </div>
+                        <div class="data-table-wrap">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>日期</th><th>订单数</th><th>实付金额</th><th>TikTok 折扣</th><th>成交额</th></tr>
+                                </thead>
+                                <tbody id="dailyTableBody"></tbody>
+                            </table>
+                        </div>
+                    </article>
+
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>按月明细</h2>
+                                <p>适合做月报、复盘、跨月对比和销售节奏分析。</p>
+                            </div>
+                        </div>
+                        <div class="data-table-wrap">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>月份</th><th>订单数</th><th>实付金额</th><th>TikTok 折扣</th><th>成交额</th></tr>
+                                </thead>
+                                <tbody id="monthlyTableBody"></tbody>
+                            </table>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="dashboard-grid">
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>客单价分布</h2>
+                                <p>看当前区间订单大多落在什么金额带。</p>
+                            </div>
+                        </div>
+                        <div class="bar-list" id="orderBucketChart"></div>
+                    </article>
+
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>用户名覆盖来源</h2>
+                                <p>看买家用户名是来自本地桥接还是 API 返回。</p>
+                            </div>
+                        </div>
+                        <div class="bar-list" id="handleSourceBreakdown"></div>
+                    </article>
+                </section>
+            </section>
+
+            <section class="view-panel" data-view-panel="commerce">
+                <section class="dashboard-grid">
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>经营罗盘</h2>
+                                <p>把销售强度、客单价、复购、支付多样性和覆盖率压缩成一个经营分数。</p>
+                            </div>
+                            <div class="score-pill">
+                                <span>综合得分</span>
+                                <strong id="compassScore">0.0</strong>
+                            </div>
+                        </div>
+                        <div class="compass-layout">
+                            <div id="businessCompassChart" class="compass-chart"></div>
+                            <div class="compass-axis-list" id="compassAxisList"></div>
+                        </div>
+                    </article>
+
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>销售漏斗</h2>
+                                <p>看观察订单、计入销售、待揽收状态单、未支付、取消和退款关闭的结构。</p>
+                            </div>
+                        </div>
+                        <div class="funnel-stack" id="funnelCards"></div>
+                    </article>
+                </section>
+
+                <section class="dashboard-grid">
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>店铺结构</h2>
+                                <p>对比各店铺的销售额、占比和客单价。</p>
+                            </div>
+                        </div>
+                        <div class="donut-grid">
+                            <div id="storeShareChart" class="donut-panel"></div>
+                            <div class="bar-list" id="storeBreakdown"></div>
+                        </div>
+                    </article>
+
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>支付方式结构</h2>
+                                <p>看支付方式的金额占比和笔数分布。</p>
+                            </div>
+                        </div>
+                        <div class="donut-grid">
+                            <div id="paymentShareChart" class="donut-panel"></div>
+                            <div class="bar-list" id="paymentBreakdown"></div>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="dashboard-grid">
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>订单状态分布</h2>
+                                <p>快速区分计入销售、待揽收状态、未支付、取消和退款关闭。</p>
+                            </div>
+                        </div>
+                        <div class="status-list" id="statusBreakdown"></div>
+                    </article>
+
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>店铺运营信号</h2>
+                                <p>按时段看付款密度，方便安排直播与客服在线节奏。</p>
+                            </div>
+                        </div>
+                        <div class="bar-list compact" id="hourlyBreakdown"></div>
+                    </article>
+                </section>
+            </section>
+
+            <section class="view-panel" data-view-panel="buyers">
+                <section class="dashboard-grid">
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>支付排行榜</h2>
+                                <p>谁买得最多、贡献最大，一眼看清。</p>
+                            </div>
+                        </div>
+                        <div class="rank-list" id="buyerBreakdown"></div>
+                    </article>
+
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>客户分层</h2>
+                                <p>按当前区间购买次数划分新客、轻复购、高频客户。</p>
+                            </div>
+                        </div>
+                        <div class="bar-list" id="buyerSegmentBreakdown"></div>
+                    </article>
+                </section>
+
+                <section class="panel module">
+                    <div class="panel-head">
+                        <div>
+                            <h2>高金额订单</h2>
+                            <p>优先关注高价值订单和高价值客户。</p>
+                        </div>
+                    </div>
+                    <div class="order-list" id="topOrders"></div>
+                </section>
+            </section>
+
+            <section class="view-panel" data-view-panel="products">
+                <section class="panel module">
+                    <div class="panel-head">
+                        <div>
+                            <h2>本月 Product ID 快查</h2>
+                            <p>输入一个 Product ID，直接查看它在本月卖了多少。SKU 会自动归并到这个 Product ID 下面，店铺按上面的店铺筛选计算。</p>
+                        </div>
+                        <div class="panel-actions">
+                            <button type="button" class="primary-button" id="productMonthQuickButton">查看本月销量</button>
+                            <button type="button" class="secondary-button" id="productMonthQuickClearButton">清空</button>
+                        </div>
+                    </div>
+                    <div class="product-quick-grid">
+                        <label class="field">
+                            <span>Product ID</span>
+                            <input id="productMonthQuickInput" type="text" placeholder="例如：1734339083053991018" />
+                        </label>
+                        <div class="note-box product-quick-note">
+                            快捷查询会自动切到“本月”，并同步到下面的 Product ID 明细。适合直接查某个链接/产品这个月一共卖了多少。
+                        </div>
+                    </div>
+                    <div class="product-month-quick-summary" id="productMonthQuickSummary"></div>
+                </section>
+
+                <section class="panel module">
+                    <div class="panel-head">
+                        <div>
+                            <h2>Product ID 销售追踪</h2>
+                            <p>按 Product ID 聚合销售，自动把该 Product ID 下所有 SKU 归并进去。可按店铺区分，也可一次查看多个 Product ID。</p>
+                        </div>
+                        <div class="panel-actions">
+                            <button type="button" class="secondary-button" id="applyProductFilterButton">查看 Product ID</button>
+                            <button type="button" class="secondary-button" id="clearProductFilterButton">清空 Product ID</button>
+                        </div>
+                    </div>
+                    <div class="product-id-toolbar">
+                        <label class="field">
+                            <span>Product ID（支持多个，逗号分隔）</span>
+                            <input id="productIdFilterInput" type="text" list="productIdSuggestions" placeholder="例如：1734339083053991018" />
+                            <datalist id="productIdSuggestions"></datalist>
+                        </label>
+                        <div class="selected-product-chips" id="selectedProductChips"></div>
+                    </div>
+                </section>
+
+                <section class="dashboard-grid">
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>按 Product ID 汇总</h2>
+                                <p>同一个 Product ID 下的 SKU 直接归并，方便你按链接或产品主键追销售额。</p>
+                            </div>
+                        </div>
+                        <div class="rank-list" id="productIdBreakdown"></div>
+                    </article>
+
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>选中 Product ID 明细</h2>
+                                <p>展开看该 Product ID 在一店、二店的分布，以及下面各 SKU 的销量和金额。</p>
+                            </div>
+                        </div>
+                        <div class="product-id-detail-list" id="selectedProductDetails"></div>
+                    </article>
+                </section>
+
+                <section class="dashboard-grid">
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>热销商品排行</h2>
+                                <p>按商品/SKU 聚合后的销售额排行。</p>
+                            </div>
+                        </div>
+                        <div class="rank-list" id="productBreakdown"></div>
+                    </article>
+
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>折扣订单排行</h2>
+                                <p>重点看 TikTok 平台折扣金额最高的订单。</p>
+                            </div>
+                        </div>
+                        <div class="order-list" id="discountOrderList"></div>
+                    </article>
+                </section>
+            </section>
+
+            <section class="view-panel" data-view-panel="reconciliation">
+                <section class="overview-grid compact" id="reconciliationCards"></section>
+
+                <section class="dashboard-grid">
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>结算结构</h2>
+                                <p>按已回款与待结算拆分，便于做对账和现金流判断。</p>
+                            </div>
+                        </div>
+                        <div id="settlementBreakdown" class="donut-panel"></div>
+                    </article>
+
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>对账说明</h2>
+                                <p>当前仍是估算口径，用于运营对账和利润预估，不是官方结算单。</p>
+                            </div>
+                        </div>
+                        <div class="note-box" id="reconciliationNote"></div>
+                    </article>
+                </section>
+
+                <section class="panel module">
+                    <div class="panel-head">
+                        <div>
+                            <h2>计入销售订单</h2>
+                            <p>订单级查看实付、折扣、平台费、物流费和预估可回款。</p>
+                        </div>
+                        <strong class="panel-count" id="includedCountLabel">0 单</strong>
+                    </div>
+                    <div class="order-list dense" id="includedOrders"></div>
+                </section>
+            </section>
+
+            <section class="view-panel" data-view-panel="risk">
+                <section class="overview-grid compact" id="riskCards"></section>
+
+                <section class="dashboard-grid">
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>未支付提醒</h2>
+                                <p>重点看便利店支付未完成订单，方便去提醒客户。</p>
+                            </div>
+                        </div>
+                        <div class="order-list dense" id="unpaidReminderList"></div>
+                    </article>
+
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>潜在客户</h2>
+                                <p>只统计当前首单就是便利店未支付的客户。</p>
+                            </div>
+                        </div>
+                        <div class="risk-list" id="potentialCustomerList"></div>
+                    </article>
+                </section>
+
+                <section class="dashboard-grid">
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>黑名单候选</h2>
+                                <p>只统计当前首单下单后又取消的客户。</p>
+                            </div>
+                        </div>
+                        <div class="risk-list" id="blacklistList"></div>
+                    </article>
+
+                    <article class="panel module">
+                        <div class="panel-head">
+                            <div>
+                                <h2>排除订单</h2>
+                                <p>集中处理未支付、已取消、退款关闭等不计入销售的订单。</p>
+                            </div>
+                            <strong class="panel-count" id="excludedCountLabel">0 单</strong>
+                        </div>
+                        <div class="order-list dense" id="excludedOrders"></div>
+                    </article>
+                </section>
+            </section>
+        </main>
+    </div>
+
+    <template id="emptyRowTemplate">
+        <tr>
+            <td colspan="5" class="empty-cell">暂无数据</td>
+        </tr>
+    </template>
+
+    <script src="/app.js?v=20260331a"></script>
+</body>
+</html>

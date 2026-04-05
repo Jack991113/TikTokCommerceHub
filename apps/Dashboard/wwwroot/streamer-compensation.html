@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TikTok 主播薪资与利润面板</title>
+  <link rel="stylesheet" href="/styles.css?v=20260330e" />
+</head>
+<body>
+  <div class="app-shell performance-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">TikTok Streamer Compensation</p>
+        <h1>主播薪资与利润面板</h1>
+        <p class="hero-text">
+          按主播和 Product ID 统计实际支付、折扣回款、预估可回款、已回款、未回款、底薪、提成和利润。
+          这里支持你自己新增主播、编辑底薪、提成比例，并给每个主播绑定多个 Product ID。
+        </p>
+      </div>
+      <div class="hero-status">
+        <span class="status-chip" id="statusChip">准备中</span>
+        <span class="status-chip subtle" id="timezoneChip">时区 -</span>
+        <span class="status-chip subtle" id="generatedAtChip">最近更新 -</span>
+      </div>
+    </header>
+
+    <section class="panel control-panel">
+      <div class="panel-head">
+        <div>
+          <h2>查询条件</h2>
+          <p>支持店铺、月份、近半年、自定义日期、平台扣点、物流成本和隐形采购成本。主播薪资统一按 RMB 录入与展示。</p>
+        </div>
+        <div class="panel-actions">
+          <button type="button" class="secondary-button" id="exportXlsxButton">导出 XLSX</button>
+          <a class="secondary-button link-button" href="/">返回主看板</a>
+        </div>
+      </div>
+
+      <form id="filtersForm" class="filters-grid">
+        <label class="field">
+          <span>店铺</span>
+          <select id="storeSelect"></select>
+        </label>
+        <label class="field">
+          <span>月份</span>
+          <select id="monthSelect"></select>
+        </label>
+        <label class="field">
+          <span>开始日期</span>
+          <input id="fromDateInput" type="date" />
+        </label>
+        <label class="field">
+          <span>结束日期</span>
+          <input id="toDateInput" type="date" />
+        </label>
+        <div class="field action-field">
+          <span>刷新</span>
+          <button type="submit" class="primary-button">刷新薪资</button>
+        </div>
+      </form>
+
+      <div class="toolbar-row">
+        <div class="preset-strip">
+          <button type="button" class="preset-button" data-preset="today">当日</button>
+          <button type="button" class="preset-button" data-preset="month">本月</button>
+          <button type="button" class="preset-button" data-preset="7days">近 7 天</button>
+          <button type="button" class="preset-button" data-preset="30days">近 30 天</button>
+          <button type="button" class="preset-button" data-preset="6months">近半年</button>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <label class="toggle-card">
+          <input id="includeTikTokDiscountToggle" type="checkbox" checked />
+          <span>计入 TikTok 折扣</span>
+          <small>折扣回款归你自己，不计入主播提成。</small>
+        </label>
+        <label class="toggle-card">
+          <input id="includeBuyerShippingFeeToggle" type="checkbox" />
+          <span>计入买家运费</span>
+          <small>买家实际支付的运费会一起计入可回款。</small>
+        </label>
+        <label class="toggle-card">
+          <input id="deductPlatformFeeToggle" type="checkbox" checked />
+          <span>扣除平台佣金</span>
+          <small>按平台费率估算，从可回款和利润中扣除。</small>
+        </label>
+        <label class="toggle-card">
+          <input id="deductLogisticsCostToggle" type="checkbox" checked />
+          <span>扣除物流成本</span>
+          <small>按单票物流成本扣除，便于看净利润。</small>
+        </label>
+        <label class="field compact">
+          <span>平台费率 (%)</span>
+          <input id="platformFeeRateInput" type="number" min="0" step="0.1" value="0" />
+        </label>
+        <label class="field compact">
+          <span>单票物流成本</span>
+          <input id="logisticsCostInput" type="number" min="0" step="1" value="0" />
+        </label>
+        <label class="field compact">
+          <span>隐形采购成本 (JPY)</span>
+          <input id="hiddenProcurementCostInput" type="number" min="0" step="1" value="0" />
+        </label>
+      </div>
+    </section>
+
+    <section class="overview-grid compact" id="overviewCards"></section>
+
+    <section class="panel module">
+      <div class="panel-head">
+        <div>
+          <h2>主播规则</h2>
+          <p>一个主播可绑定多个 Product ID。Product ID 支持逗号、空格或换行分隔。你新增的主播会直接参与计算。</p>
+        </div>
+        <div class="panel-actions">
+          <button type="button" class="secondary-button" id="addStreamerButton">新增主播</button>
+          <button type="button" class="secondary-button" id="resetRulesButton">恢复默认</button>
+        </div>
+      </div>
+      <div class="streamer-rule-editor-grid" id="ruleEditorGrid"></div>
+    </section>
+
+    <section class="streamer-grid" id="streamerGrid"></section>
+
+    <section class="dashboard-grid">
+      <article class="panel module">
+        <div class="panel-head">
+          <div>
+            <h2>月度利润</h2>
+            <p>按月份聚合所有主播与自营后的回款、薪资、隐形采购成本和利润。</p>
+          </div>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>月份</th>
+                <th>实际支付</th>
+                <th>TikTok 折扣</th>
+                <th>预估可回款</th>
+                <th>底薪 RMB</th>
+                <th>提成 JPY</th>
+                <th>实发薪资 RMB</th>
+                <th>隐形成本 JPY</th>
+                <th>利润前 JPY</th>
+                <th>利润后 JPY</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyProfitBody"></tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="panel module">
+        <div class="panel-head">
+          <div>
+            <h2>店铺拆分</h2>
+            <p>看每个主播在一店、二店分别贡献了多少订单、可回款和已回款。</p>
+          </div>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>主体</th>
+                <th>店铺</th>
+                <th>订单数</th>
+                <th>实际支付</th>
+                <th>预估可回款</th>
+                <th>已回款</th>
+                <th>未回款</th>
+              </tr>
+            </thead>
+            <tbody id="storeBreakdownBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </div>
+
+  <script src="/streamer-compensation.js?v=20260330e"></script>
+</body>
+</html>

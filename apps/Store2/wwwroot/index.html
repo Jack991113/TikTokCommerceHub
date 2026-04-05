@@ -1,0 +1,435 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1b5a50">
+  <title>TikTok Shop Print Studio</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css?v=20260323c">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="topbar-mark">TS</div>
+        <div class="topbar-copy-block">
+          <p class="eyebrow">Web Print Workspace</p>
+          <h1>TikTok Shop Print Studio</h1>
+          <p class="topbar-copy">本地自动打单、历史订单检索、Seller Center 用户名桥接、票面配置与重打作业，统一放进一套更像商业软件的工作台里。</p>
+        </div>
+      </div>
+
+      <div class="topbar-side">
+        <div class="topbar-signals">
+          <span class="signal" id="pollStateSignal">服务连接中</span>
+          <span class="signal" id="bridgeStateSignal">桥接待机</span>
+          <span class="signal" id="configStateSignal">配置已保存</span>
+        </div>
+        <div class="topbar-actions">
+          <span class="topbar-hint">保持 Seller Center 订单页打开；右下角出现绿色桥接状态条表示脚本已启动。</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="app-body">
+      <aside class="sidebar">
+        <section class="panel hero-panel">
+          <div class="hero-header">
+            <div>
+              <p class="eyebrow">Operations Core</p>
+              <h2>订单控制中心</h2>
+              <p class="panel-copy">所有常用动作、打印配置、历史检索、桥接脚本和票面开关都集中在左侧，减少来回切换。</p>
+            </div>
+            <div class="hero-badges">
+              <span class="status-pill" id="shopBadge">未配置店铺</span>
+              <span class="status-pill" id="printerBadge">未选择打印机</span>
+              <span class="status-pill" id="activeTabPill">缓存订单</span>
+            </div>
+          </div>
+          <nav class="module-nav">
+            <button type="button" class="nav-link" data-scroll-target="quickActionsPanel">快捷操作</button>
+            <button type="button" class="nav-link" data-scroll-target="baseConfigPanel">打印配置</button>
+            <button type="button" class="nav-link" data-scroll-target="credentialsPanel">TikTok 凭证</button>
+            <button type="button" class="nav-link" data-scroll-target="bridgePanel">用户名桥接</button>
+            <button type="button" class="nav-link" data-scroll-target="historyPanel">历史检索</button>
+            <button type="button" class="nav-link" data-scroll-target="ticketPanel">票面选项</button>
+          </nav>
+        </section>
+
+        <section class="panel" id="quickActionsPanel">
+          <div class="panel-head">
+            <h2>快捷操作</h2>
+            <p>最常用的动作单独放到顶部，一键同步、刷新、打单，不需要来回找入口。</p>
+          </div>
+          <div class="quick-grid">
+            <button class="primary-button" type="button" id="pollButton">立即同步新订单</button>
+            <button class="secondary-button" type="button" id="refreshTokenButton">刷新 Access Token</button>
+            <button class="secondary-button" type="button" id="refreshWorkspaceButton">刷新工作台</button>
+            <button class="secondary-button" type="button" id="printSelectedButton">打印已选订单</button>
+          </div>
+        </section>
+
+        <form id="configForm" class="panel-stack">
+          <section class="panel" id="baseConfigPanel">
+            <div class="panel-head">
+              <h2>打印与轮询配置</h2>
+              <p>控制店铺名称、打印机、纸张尺寸、字号、边距，以及自动打单行为。</p>
+            </div>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>店铺名称</span>
+                <input id="storeName" autocomplete="off" placeholder="例如：Sen General JP">
+              </label>
+
+              <label class="field">
+                <span>打印机名称</span>
+                <input id="printerName" list="printerNames" autocomplete="off" placeholder="留空则使用系统默认打印机">
+              </label>
+
+              <label class="field">
+                <span>纸张尺寸</span>
+                <select id="paperSize">
+                  <option value="30x40">30 × 40 mm</option>
+                  <option value="100x100">100 × 100 mm</option>
+                  <option value="100x150">100 × 150 mm</option>
+                  <option value="custom">自定义尺寸</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>自动打印新订单</span>
+                <select id="autoPrintNewOrders">
+                  <option value="false">关闭</option>
+                  <option value="true">开启</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>等待用户名回填后再自动打</span>
+                <select id="autoPrintAfterBridgeCapture">
+                  <option value="false">关闭</option>
+                  <option value="true">开启</option>
+                </select>
+              </label>
+
+              <label class="field" data-custom-paper>
+                <span>自定义宽度 mm</span>
+                <input id="customPaperWidthMm" type="number" min="20" step="0.1">
+              </label>
+
+              <label class="field" data-custom-paper>
+                <span>自定义高度 mm</span>
+                <input id="customPaperHeightMm" type="number" min="20" step="0.1">
+              </label>
+
+              <label class="field">
+                <span>边距 mm</span>
+                <input id="marginMm" type="number" min="0.5" step="0.1">
+              </label>
+
+              <label class="field">
+                <span>文本宽度字符数</span>
+                <input id="paperWidthCharacters" type="number" min="12" step="1">
+              </label>
+
+              <label class="field">
+                <span>基础字号</span>
+                <input id="baseFontSize" type="number" min="3" step="0.1">
+              </label>
+
+              <label class="field">
+                <span>最小字号</span>
+                <input id="minFontSize" type="number" min="3" step="0.1">
+              </label>
+            </div>
+
+            <datalist id="printerNames"></datalist>
+            <div class="tag-cloud" id="printerChips"></div>
+          </section>
+
+          <section class="panel" id="credentialsPanel">
+            <div class="panel-head">
+              <h2>TikTok 凭证</h2>
+              <p>保存 App Key、App Secret、Access Token、Refresh Token 和店铺标识。</p>
+            </div>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>App Key</span>
+                <input id="appKey" autocomplete="off">
+              </label>
+
+              <label class="field">
+                <span>App Secret</span>
+                <input id="appSecret" autocomplete="off">
+              </label>
+
+              <label class="field field-wide">
+                <span>Shop Cipher / Shop ID</span>
+                <input id="shopId" autocomplete="off" placeholder="优先填写 shop_cipher">
+              </label>
+
+              <label class="field field-wide">
+                <span>Access Token</span>
+                <textarea id="accessToken" spellcheck="false"></textarea>
+              </label>
+
+              <label class="field field-wide">
+                <span>Refresh Token</span>
+                <textarea id="refreshTokenInput" spellcheck="false"></textarea>
+              </label>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>授权码换 Token</h2>
+              <p>支持直接粘贴完整回调地址，也支持只粘贴 code。</p>
+            </div>
+
+            <label class="field">
+              <span>回调地址 / code</span>
+              <textarea id="authCodeOrUrl" spellcheck="false" placeholder="例如：https://xxx/callback?code=..."></textarea>
+            </label>
+
+            <div class="form-actions">
+              <button class="secondary-button" type="button" id="exchangeTokenButton">使用授权码换 Token</button>
+            </div>
+          </section>
+
+          <section class="panel" id="bridgePanel">
+            <div class="panel-head">
+              <h2>Seller Center 用户名桥接</h2>
+              <p>当订单接口没有返回 <code>buyer_nickname</code> 时，用 Seller Center 页面右侧显示的客户用户名按订单号自动回填到本地系统。</p>
+            </div>
+
+            <div class="bridge-card">
+              <p>安装很简单：先点下面的脚本链接，在 Tampermonkey 里确认安装；然后保持 Seller Center 订单列表页或详情页打开即可。</p>
+              <div class="form-actions">
+                <a class="primary-button anchor-button" href="/seller-center-bridge.user.js" target="_blank" rel="noopener">安装 Tampermonkey 脚本</a>
+                <a class="secondary-button anchor-button" href="/seller-center-bridge.user.js" download="seller-center-bridge.user.js">下载脚本</a>
+              </div>
+              <p>脚本启动后，Seller Center 页面右下角会出现桥接状态条。看到“桥接在线”或“已同步：客户ID”就说明它正在工作。</p>
+            </div>
+          </section>
+
+          <section class="panel" id="historyPanel">
+            <div class="panel-head">
+              <h2>历史订单检索</h2>
+              <p>直接拉取过去订单。支持时间范围、状态、关键字和分页切换。</p>
+            </div>
+
+            <div class="preset-row">
+              <button class="chip-button" type="button" data-range-days="7">近 7 天</button>
+              <button class="chip-button" type="button" data-range-days="30">近 30 天</button>
+              <button class="chip-button" type="button" data-range-days="90">近 90 天</button>
+            </div>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>开始时间</span>
+                <input id="historyFrom" type="datetime-local">
+              </label>
+
+              <label class="field">
+                <span>结束时间</span>
+                <input id="historyTo" type="datetime-local">
+              </label>
+
+              <label class="field">
+                <span>每页条数</span>
+                <select id="historyPageSize">
+                  <option value="20">20</option>
+                  <option value="30">30</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span>订单状态</span>
+                <select id="historyStatus">
+                  <option value="">全部状态</option>
+                  <option value="UNPAID">UNPAID</option>
+                  <option value="ON_HOLD">ON_HOLD</option>
+                  <option value="AWAITING_SHIPMENT">AWAITING_SHIPMENT</option>
+                  <option value="TO_SHIP">TO_SHIP</option>
+                  <option value="DELIVERED">DELIVERED</option>
+                  <option value="COMPLETED">COMPLETED</option>
+                  <option value="CANCELLED">CANCELLED</option>
+                </select>
+              </label>
+
+              <label class="field field-wide">
+                <span>关键字</span>
+                <input id="historyKeyword" autocomplete="off" placeholder="订单号、用户名、User ID、收件人、电话、地址、商品">
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <button class="primary-button" type="button" id="historySearchButton">查询历史订单</button>
+              <button class="secondary-button" type="button" id="historyPrevButton">上一页</button>
+              <button class="secondary-button" type="button" id="historyNextButton">下一页</button>
+            </div>
+
+            <p class="panel-note" id="historySummary">尚未发起历史订单查询。</p>
+          </section>
+
+          <section class="panel" id="ticketPanel">
+            <div class="panel-head">
+              <h2>票面打印选项</h2>
+              <p>控制票面上要显示哪些买家、物流和订单信息。</p>
+            </div>
+
+            <div class="toggle-grid">
+              <label class="toggle-item"><input id="showBuyerAccountName" type="checkbox"><span>打印买家昵称 ID（buyer_nickname）</span></label>
+              <label class="toggle-item"><input id="showBuyerPlatformUserId" type="checkbox"><span>打印买家 User ID（user_id）</span></label>
+              <label class="toggle-item"><input id="showBuyerName" type="checkbox"><span>打印 TikTok 名称</span></label>
+              <label class="toggle-item"><input id="showBuyerEmail" type="checkbox"><span>打印买家邮箱别名</span></label>
+              <label class="toggle-item"><input id="showRecipientPhone" type="checkbox"><span>打印收件电话</span></label>
+              <label class="toggle-item"><input id="showBuyerMessage" type="checkbox"><span>打印买家备注</span></label>
+              <label class="toggle-item"><input id="showOrderAmounts" type="checkbox"><span>打印订单金额</span></label>
+              <label class="toggle-item"><input id="showItemDetails" type="checkbox"><span>打印商品明细</span></label>
+              <label class="toggle-item"><input id="showSku" type="checkbox"><span>打印 SKU 子类目（如 300*10）</span></label>
+              <label class="toggle-item"><input id="showPaidTime" type="checkbox"><span>打印支付时间</span></label>
+              <label class="toggle-item"><input id="showCreatedTime" type="checkbox"><span>打印下单时间</span></label>
+            </div>
+
+            <div class="inline-meter">
+              <span>已加入票面的接口字段</span>
+              <strong id="selectedRawFieldCount">0 项</strong>
+            </div>
+
+            <p class="panel-note">在右侧预览里勾选任意接口字段后，会保存到这里，并参与票面打印。</p>
+          </section>
+
+          <section class="panel save-panel">
+            <div class="panel-head">
+              <h2>自动保存</h2>
+              <p>这里的配置项会自动保存。开关和下拉一改就存，文本输入停一下就存，不需要再点“保存配置”。</p>
+            </div>
+          </section>
+        </form>
+      </aside>
+
+      <main class="workspace">
+        <section class="workspace-panel overview-panel">
+          <div class="metrics-grid">
+            <article class="metric-card">
+              <span>缓存订单</span>
+              <strong id="metricCachedCount">0</strong>
+            </article>
+            <article class="metric-card">
+              <span>最近发现</span>
+              <strong id="metricFoundCount">0</strong>
+            </article>
+            <article class="metric-card">
+              <span>已打印</span>
+              <strong id="metricPrintedCount">0</strong>
+            </article>
+            <article class="metric-card">
+              <span>待桥接用户名</span>
+              <strong id="metricBridgePendingCount">0</strong>
+            </article>
+            <article class="metric-card">
+              <span>桥接完成</span>
+              <strong id="metricBridgeMatchedCount">0</strong>
+            </article>
+            <article class="metric-card">
+              <span>当前已选</span>
+              <strong id="metricSelectedCount">0</strong>
+            </article>
+          </div>
+
+          <div class="status-wrap">
+            <div class="status-grid" id="statusGrid"></div>
+            <div class="message-board" id="messageBoard">系统已就绪。</div>
+          </div>
+        </section>
+
+        <section class="workspace-panel orders-panel">
+          <div class="orders-head">
+            <div>
+              <p class="eyebrow">Operations Desk</p>
+              <h2>订单作业台</h2>
+              <p class="orders-copy" id="deskMeta">缓存订单按支付时间优先倒序显示。</p>
+            </div>
+
+            <div class="orders-head-actions">
+              <div class="tab-strip">
+                <button class="tab-button active" type="button" data-tab="cache">缓存订单</button>
+                <button class="tab-button" type="button" data-tab="history">历史订单</button>
+              </div>
+
+              <div class="view-switch">
+                <button class="chip-button active" type="button" data-view-mode="board">看板视图</button>
+                <button class="chip-button" type="button" data-view-mode="compact">紧凑视图</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="toolbar-grid">
+            <label class="search-field">
+              <span>快速筛选</span>
+              <input id="listSearch" autocomplete="off" placeholder="订单号、用户名、User ID、收件人、商品、地址">
+            </label>
+
+            <label class="compact-field">
+              <span>打印状态</span>
+              <select id="listPrintState">
+                <option value="all">全部</option>
+                <option value="pending">待打印</option>
+                <option value="printed">已打印</option>
+                <option value="failed">打印失败</option>
+              </select>
+            </label>
+
+            <div class="toolbar-actions">
+              <button class="secondary-button" type="button" id="selectVisibleButton">全选当前页</button>
+              <button class="secondary-button" type="button" id="clearSelectedButton">清空选择</button>
+              <button class="secondary-button" type="button" id="refreshActiveDatasetButton">刷新当前列表</button>
+            </div>
+          </div>
+
+          <div class="selection-bar hidden" id="selectionBar">
+            <div>
+              <strong id="selectionHint">已选 0 单</strong>
+              <p>可以直接批量打印，或保留选择继续查看预览。</p>
+            </div>
+            <div class="selection-actions">
+              <button class="secondary-button" type="button" id="selectionClearButton">清空</button>
+              <button class="primary-button" type="button" id="selectionPrintButton">打印已选</button>
+            </div>
+          </div>
+
+          <div class="order-list order-list--board" id="orderList"></div>
+        </section>
+      </main>
+
+      <aside class="preview-pane">
+        <div class="preview-placeholder" id="previewPlaceholder">
+          <p class="eyebrow">Preview</p>
+          <h2>订单预览</h2>
+          <p>点击订单卡片或右键打开预览。右侧会展示订单摘要、票面、接口字段和原始 JSON，并支持直接打印、重新打印与复制。</p>
+        </div>
+        <div class="preview-content hidden" id="previewContent"></div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="context-menu hidden" id="contextMenu">
+    <button type="button" data-menu-action="preview">打开预览</button>
+    <button type="button" data-menu-action="print">直接打印</button>
+    <button type="button" data-menu-action="fresh-print">实时拉详情并打印</button>
+    <button type="button" data-menu-action="copy-order">复制订单号</button>
+    <button type="button" data-menu-action="copy-buyer-nickname">复制买家昵称 ID</button>
+    <button type="button" data-menu-action="copy-buyer-user-id">复制买家 User ID</button>
+  </div>
+
+  <div class="toast-stack" id="toastStack"></div>
+
+  <script src="/app.js?v=20260323c" defer></script>
+</body>
+</html>

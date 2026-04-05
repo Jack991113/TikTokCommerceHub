@@ -1,0 +1,26 @@
+# Build outputs
+bin/
+obj/
+.build/
+.verify/
+.verify2/
+artifacts/
+logs/
+
+# App runtime data
+apps/Store1/Data/runtime-state.json
+apps/Store2/Data/runtime-state.json
+apps/Store1/Data/print-jobs/
+apps/Store2/Data/print-jobs/
+apps/Dashboard/Data/
+
+# OS / editor
+.vs/
+.idea/
+*.user
+*.suo
+Thumbs.db
+Desktop.ini
+
+# Temporary exports
+*.zip

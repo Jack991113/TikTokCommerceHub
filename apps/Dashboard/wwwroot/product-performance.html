@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TikTok 产品业绩窗口</title>
+    <link rel="stylesheet" href="/styles.css?v=20260330a" />
+</head>
+<body>
+    <div class="app-shell performance-shell">
+        <header class="hero">
+            <div class="hero-copy">
+                <p class="eyebrow">TikTok Product Performance</p>
+                <h1>产品业绩窗口</h1>
+                <p class="hero-text">
+                    在这个独立窗口里，你可以直接输入 Product ID 搜索，也可以继续使用固定的 5 个链接快速查看。
+                    统计仍然基于 TikTok API，并自动把同一 Product ID 下的 SKU 合并计算。
+                </p>
+            </div>
+            <div class="hero-status">
+                <span class="status-chip" id="statusChip">准备中</span>
+                <span class="status-chip subtle" id="timezoneChip">时区 -</span>
+                <span class="status-chip subtle" id="generatedAtChip">最近更新 -</span>
+            </div>
+        </header>
+
+        <section class="panel control-panel">
+            <div class="panel-head">
+                <div>
+                    <h2>查询条件</h2>
+                    <p>默认按本月统计。你可以直接输入一个或多个 Product ID 进行搜索查询。</p>
+                </div>
+                <div class="panel-actions">
+                    <button type="button" class="secondary-button" id="exportXlsxButton">导出 XLSX</button>
+                    <a class="secondary-button link-button" href="/">返回主看板</a>
+                </div>
+            </div>
+
+            <form id="filtersForm" class="filters-grid">
+                <label class="field">
+                    <span>店铺</span>
+                    <select id="storeSelect"></select>
+                </label>
+                <label class="field">
+                    <span>月份</span>
+                    <select id="monthSelect"></select>
+                </label>
+                <label class="field">
+                    <span>开始日期</span>
+                    <input id="fromDateInput" type="date" />
+                </label>
+                <label class="field">
+                    <span>结束日期</span>
+                    <input id="toDateInput" type="date" />
+                </label>
+                <div class="field action-field">
+                    <span>刷新</span>
+                    <button type="submit" class="primary-button">刷新业绩</button>
+                </div>
+            </form>
+
+            <div class="toolbar-row">
+                <div class="preset-strip">
+                    <button type="button" class="preset-button" data-preset="today">当日</button>
+                    <button type="button" class="preset-button" data-preset="month">本月</button>
+                    <button type="button" class="preset-button" data-preset="7days">近 7 天</button>
+                    <button type="button" class="preset-button" data-preset="30days">近 30 天</button>
+                </div>
+            </div>
+
+            <div class="product-search-panel">
+                <label class="field search-field">
+                    <span>Product ID 搜索框</span>
+                    <input id="productIdsInput" type="text" placeholder="输入 Product ID，支持多个，用逗号、空格或回车分隔" />
+                    <small class="field-help">
+                        留空时默认使用固定追踪的 5 个 Product ID；输入后就按你输入的 Product ID 查询。
+                    </small>
+                </label>
+                <div class="product-search-actions">
+                    <button type="button" class="primary-button" id="applyProductIdsButton">查询 Product ID</button>
+                    <button type="button" class="secondary-button" id="clearProductIdsButton">恢复默认 5 个链接</button>
+                </div>
+            </div>
+
+            <div class="settings-grid">
+                <label class="toggle-card">
+                    <input id="includeTikTokDiscountToggle" type="checkbox" checked />
+                    <span>计入 TikTok 折扣</span>
+                    <small>平台承担的 TikTok 折扣计入成交额和回款估算。</small>
+                </label>
+                <label class="toggle-card">
+                    <input id="includeBuyerShippingFeeToggle" type="checkbox" />
+                    <span>计入买家运费</span>
+                    <small>把买家实际支付的运费一起计入产品业绩和回款估算。</small>
+                </label>
+                <label class="toggle-card">
+                    <input id="deductPlatformFeeToggle" type="checkbox" checked />
+                    <span>扣除平台佣金</span>
+                    <small>按平台费率估算佣金，直接从回款里扣掉。</small>
+                </label>
+                <label class="toggle-card">
+                    <input id="deductLogisticsCostToggle" type="checkbox" checked />
+                    <span>扣除物流成本</span>
+                    <small>按单票物流成本分摊到产品业绩里。</small>
+                </label>
+                <label class="field compact">
+                    <span>平台费率 (%)</span>
+                    <input id="platformFeeRateInput" type="number" min="0" step="0.1" value="0" />
+                </label>
+                <label class="field compact">
+                    <span>单票物流成本</span>
+                    <input id="logisticsCostInput" type="number" min="0" step="1" value="0" />
+                </label>
+            </div>
+        </section>
+
+        <section class="overview-grid compact" id="overviewCards"></section>
+
+        <section class="panel module">
+            <div class="panel-head">
+                <div>
+                    <h2>固定 Product ID 快捷入口</h2>
+                    <p>点击下面的 Product ID，会自动加入或移出搜索框，方便你快速切换。</p>
+                </div>
+            </div>
+            <div class="selected-product-chips" id="trackedProductChips"></div>
+        </section>
+
+        <section class="panel module">
+            <div class="panel-head">
+                <div>
+                    <h2>当前查询 Product ID</h2>
+                    <p id="activeProductHint">当前未输入时，默认按固定的 5 个 Product ID 统计。</p>
+                </div>
+            </div>
+            <div class="selected-product-chips" id="activeProductChips"></div>
+        </section>
+
+        <section class="performance-products-grid" id="productPerformanceGrid"></section>
+    </div>
+
+    <script src="/product-performance.js?v=20260330a"></script>
+</body>
+</html>
